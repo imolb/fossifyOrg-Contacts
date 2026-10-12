@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/contact_related_edit_holder"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingEnd="@dimen/activity_margin">
+
+    <org.fossify.commons.views.MyEditText
+        android:id="@+id/contact_related"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:hint="@string/name"
+        android:inputType="textPersonName"
+        android:lines="1"
+        android:maxLines="1"
+        android:singleLine="true"
+        android:textCursorDrawable="@null"
+        android:textSize="@dimen/bigger_text_size" />
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/contact_related_type"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/contact_related"
+        android:layout_alignBottom="@+id/contact_related"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical|end"
+        android:minWidth="70dp"
+        android:paddingStart="@dimen/medium_margin"
+        android:paddingEnd="@dimen/medium_margin"
+        android:textSize="@dimen/bigger_text_size" />
+
+</RelativeLayout>

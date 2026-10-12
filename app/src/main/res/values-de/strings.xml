@@ -82,4 +82,21 @@
     <string name="select_account">Konto auswählen</string>
     <string name="structured_addresses">Strukturierte Adressen (Bearbeitungsmodus)</string>
     <string name="city">Stadt</string>
+    <string name="relationships">Beziehungen</string>
+    <string name="add_relationship">Beziehung hinzufügen</string>
+    <string name="spouse">Ehepartner</string>
+    <string name="child">Kind</string>
+    <string name="parent">Elternteil</string>
+    <string name="sibling">Geschwister</string>
+    <string name="brother">Bruder</string>
+    <string name="sister">Schwester</string>
+    <string name="father">Vater</string>
+    <string name="mother">Mutter</string>
+    <string name="friend">Freund</string>
+    <string name="partner">Partner</string>
+    <string name="assistant">Assistent</string>
+    <string name="manager">Manager</string>
+    <string name="relative">Verwandter</string>
+    <string name="referred_by">Empfohlen von</string>
+    <string name="domestic_partner">Lebenspartner</string>
 </resources>

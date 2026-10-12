@@ -9,6 +9,7 @@ import android.provider.ContactsContract.CommonDataKinds.StructuredPostal
 import android.widget.Toast
 import ezvcard.Ezvcard
 import ezvcard.VCard
+import ezvcard.property.Related
 import ezvcard.util.PartialDate
 import org.fossify.commons.extensions.getCachePhoto
 import org.fossify.commons.extensions.groupsDB
@@ -24,6 +25,7 @@ import org.fossify.commons.models.contacts.Event
 import org.fossify.commons.models.contacts.Group
 import org.fossify.commons.models.contacts.IM
 import org.fossify.commons.models.contacts.Organization
+import org.fossify.commons.models.contacts.RelatedContact
 import org.fossify.contacts.activities.SimpleActivity
 import org.fossify.contacts.extensions.getCachePhotoUri
 import org.fossify.contacts.helpers.VcfImporter.ImportResult.IMPORT_FAIL
@@ -241,6 +243,18 @@ class VcfImporter(val activity: SimpleActivity) {
                     IMs.add(IM)
                 }
 
+                val relatedContacts = ArrayList<RelatedContact>()
+                ezContact.relations.forEach { related ->
+                    val name = related.text ?: related.uri ?: return@forEach
+                    if (name.isNotEmpty()) {
+                        // TYPE is optional in vCard 4.0, so keep unlabeled relations as custom
+                        val typeString = related.types.firstOrNull()?.value ?: ""
+                        val (type, label) = getRelationTypeIdAndLabel(typeString)
+                        relatedContacts.add(RelatedContact(name, type, label))
+                    }
+                }
+                relatedContacts.addAll(getAppleRelatedContacts(ezContact))
+
                 val contact = Contact(
                     id = 0,
                     prefix = prefix,
@@ -265,7 +279,8 @@ class VcfImporter(val activity: SimpleActivity) {
                     websites = websites,
                     IMs = IMs,
                     mimetype = DEFAULT_MIMETYPE,
-                    ringtone = ringtone
+                    ringtone = ringtone,
+                    relatedContacts = relatedContacts
                 )
 
                 // if there is no N and ORG fields at the given contact, only FN, treat it as an organization

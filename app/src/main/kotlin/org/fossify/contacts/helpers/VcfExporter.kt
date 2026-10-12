@@ -177,6 +177,15 @@ class VcfExporter {
                     card.addUrl(it)
                 }
 
+                contact.relatedContacts.forEach {
+                    val relatedProperty = Related(it.name)
+                    val typeLabel = getRelationTypeValue(it.type, it.label)
+                    if (typeLabel.isNotEmpty()) {
+                        relatedProperty.parameters.addType(typeLabel)
+                    }
+                    card.addRelated(relatedProperty)
+                }
+
                 try {
                     val inputStream =
                         context.contentResolver.openInputStream(contact.photoUri.toUri())

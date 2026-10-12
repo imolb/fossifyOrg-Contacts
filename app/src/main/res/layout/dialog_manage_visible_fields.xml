@@ -157,5 +157,13 @@
             android:paddingBottom="@dimen/activity_margin"
             android:text="@string/contact_source" />
 
+        <org.fossify.commons.views.MyAppCompatCheckbox
+            android:id="@+id/manage_visible_fields_relationships"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="@dimen/activity_margin"
+            android:paddingBottom="@dimen/activity_margin"
+            android:text="@string/relationships" />
+
     </LinearLayout>
 </ScrollView>

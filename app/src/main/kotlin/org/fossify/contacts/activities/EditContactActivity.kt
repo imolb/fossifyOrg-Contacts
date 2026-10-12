@@ -15,6 +15,7 @@ import android.provider.ContactsContract.CommonDataKinds
 import android.provider.ContactsContract.CommonDataKinds.Im
 import android.provider.ContactsContract.CommonDataKinds.Note
 import android.provider.ContactsContract.CommonDataKinds.Phone
+import android.provider.ContactsContract.CommonDataKinds.Relation
 import android.provider.ContactsContract.CommonDataKinds.StructuredName
 import android.provider.ContactsContract.CommonDataKinds.StructuredPostal
 import android.provider.ContactsContract.CommonDataKinds.Website
@@ -89,6 +90,7 @@ import org.fossify.commons.helpers.SHOW_NOTES_FIELD
 import org.fossify.commons.helpers.SHOW_ORGANIZATION_FIELD
 import org.fossify.commons.helpers.SHOW_PHONE_NUMBERS_FIELD
 import org.fossify.commons.helpers.SHOW_PREFIX_FIELD
+import org.fossify.commons.helpers.SHOW_RELATIONSHIPS_FIELD
 import org.fossify.commons.helpers.SHOW_RINGTONE_FIELD
 import org.fossify.commons.helpers.SHOW_STRUCTURED_ADDRESSES_FIELD
 import org.fossify.commons.helpers.SHOW_SUFFIX_FIELD
@@ -106,6 +108,7 @@ import org.fossify.commons.models.contacts.Event
 import org.fossify.commons.models.contacts.Group
 import org.fossify.commons.models.contacts.IM
 import org.fossify.commons.models.contacts.Organization
+import org.fossify.commons.models.contacts.RelatedContact
 import org.fossify.commons.views.MyAutoCompleteTextView
 import org.fossify.contacts.R
 import org.fossify.contacts.adapters.AutoCompleteTextViewAdapter
@@ -115,6 +118,7 @@ import org.fossify.contacts.databinding.ItemEditEmailBinding
 import org.fossify.contacts.databinding.ItemEditGroupBinding
 import org.fossify.contacts.databinding.ItemEditImBinding
 import org.fossify.contacts.databinding.ItemEditPhoneNumberBinding
+import org.fossify.contacts.databinding.ItemEditRelatedBinding
 import org.fossify.contacts.databinding.ItemEditStructuredAddressBinding
 import org.fossify.contacts.databinding.ItemEditWebsiteBinding
 import org.fossify.contacts.databinding.ItemEventBinding
@@ -311,7 +315,8 @@ class EditContactActivity : ContactActivity() {
             binding.contactOrganizationImage,
             binding.contactWebsitesImage,
             binding.contactGroupsImage,
-            binding.contactSourceImage
+            binding.contactSourceImage,
+            binding.contactRelationsImage
         ).forEach {
             it.applyColorFilter(textColor)
         }
@@ -319,7 +324,7 @@ class EditContactActivity : ContactActivity() {
         val properPrimaryColor = getProperPrimaryColor()
         arrayOf(
             binding.contactNumbersAddNew, binding.contactEmailsAddNew, binding.contactAddressesAddNew, binding.contactImsAddNew, binding.contactEventsAddNew,
-            binding.contactWebsitesAddNew, binding.contactGroupsAddNew
+            binding.contactWebsitesAddNew, binding.contactGroupsAddNew, binding.contactRelationsAddNew
         ).forEach {
             it.applyColorFilter(properPrimaryColor)
         }
@@ -331,7 +336,8 @@ class EditContactActivity : ContactActivity() {
             binding.contactImsAddNew.background,
             binding.contactEventsAddNew.background,
             binding.contactWebsitesAddNew.background,
-            binding.contactGroupsAddNew.background
+            binding.contactGroupsAddNew.background,
+            binding.contactRelationsAddNew.background
         ).forEach {
             it.applyColorFilter(textColor)
         }
@@ -345,6 +351,7 @@ class EditContactActivity : ContactActivity() {
         binding.contactImsAddNew.setOnClickListener { addNewIMField() }
         binding.contactEventsAddNew.setOnClickListener { addNewEventField() }
         binding.contactWebsitesAddNew.setOnClickListener { addNewWebsiteField() }
+        binding.contactRelationsAddNew.setOnClickListener { addNewRelatedField() }
         binding.contactGroupsAddNew.setOnClickListener { showSelectGroupsDialog() }
         binding.contactSource.setOnClickListener { showSelectContactSourceDialog() }
 
@@ -551,6 +558,11 @@ class EditContactActivity : ContactActivity() {
         binding.contactWebsitesHolder.beVisibleIf(areWebsitesVisible)
         binding.contactWebsitesAddNew.beVisibleIf(areWebsitesVisible)
 
+        val areRelationsVisible = showFields and SHOW_RELATIONSHIPS_FIELD != 0
+        binding.contactRelationsImage.beVisibleIf(areRelationsVisible)
+        binding.contactRelationsHolder.beVisibleIf(areRelationsVisible)
+        binding.contactRelationsAddNew.beVisibleIf(areRelationsVisible)
+
         val areGroupsVisible = showFields and SHOW_GROUPS_FIELD != 0
         binding.contactGroupsImage.beVisibleIf(areGroupsVisible)
         binding.contactGroupsHolder.beVisibleIf(areGroupsVisible)
@@ -575,6 +587,7 @@ class EditContactActivity : ContactActivity() {
         setupNotes()
         setupOrganization()
         setupWebsites()
+        setupRelatedContacts()
         setupEvents()
         setupGroups()
         setupContactSource()
@@ -805,6 +818,96 @@ class EditContactActivity : ContactActivity() {
         }
     }
 
+    private fun setupRelatedContacts() {
+        contact!!.relatedContacts.forEachIndexed { index, relatedContact ->
+            val relatedHolderView = binding.contactRelationsHolder.getChildAt(index)
+            val relatedHolder = if (relatedHolderView == null) {
+                ItemEditRelatedBinding.inflate(layoutInflater, binding.contactRelationsHolder, false).apply {
+                    binding.contactRelationsHolder.addView(root)
+                }
+            } else {
+                ItemEditRelatedBinding.bind(relatedHolderView)
+            }
+
+            relatedHolder.apply {
+                contactRelated.setText(relatedContact.name)
+                setupRelationTypePicker(contactRelatedType, relatedContact.type, relatedContact.label)
+            }
+        }
+    }
+
+    private fun addNewRelatedField() {
+        val relatedHolder = ItemEditRelatedBinding.inflate(layoutInflater, binding.contactRelationsHolder, false)
+        updateTextColors(relatedHolder.root)
+        setupRelationTypePicker(relatedHolder.contactRelatedType, Relation.TYPE_SPOUSE, "")
+        binding.contactRelationsHolder.addView(relatedHolder.root)
+        binding.contactRelationsHolder.onGlobalLayout {
+            relatedHolder.contactRelated.requestFocus()
+            showKeyboard(relatedHolder.contactRelated)
+        }
+    }
+
+    private fun setupRelationTypePicker(relatedTypeField: TextView, type: Int, label: String) {
+        relatedTypeField.apply {
+            text = getRelationTypeText(type, label)
+            setOnClickListener {
+                showRelationTypePicker(it as TextView)
+            }
+        }
+    }
+
+    private fun showRelationTypePicker(relatedTypeField: TextView) {
+        val items = arrayListOf(
+            RadioItem(Relation.TYPE_SPOUSE, getString(R.string.spouse)),
+            RadioItem(Relation.TYPE_CHILD, getString(R.string.child)),
+            RadioItem(Relation.TYPE_PARENT, getString(R.string.parent)),
+            RadioItem(Relation.TYPE_BROTHER, getString(R.string.brother)),
+            RadioItem(Relation.TYPE_SISTER, getString(R.string.sister)),
+            RadioItem(Relation.TYPE_FATHER, getString(R.string.father)),
+            RadioItem(Relation.TYPE_MOTHER, getString(R.string.mother)),
+            RadioItem(Relation.TYPE_FRIEND, getString(R.string.friend)),
+            RadioItem(Relation.TYPE_PARTNER, getString(R.string.partner)),
+            RadioItem(Relation.TYPE_DOMESTIC_PARTNER, getString(R.string.domestic_partner)),
+            RadioItem(Relation.TYPE_ASSISTANT, getString(R.string.assistant)),
+            RadioItem(Relation.TYPE_MANAGER, getString(R.string.manager)),
+            RadioItem(Relation.TYPE_REFERRED_BY, getString(R.string.referred_by)),
+            RadioItem(Relation.TYPE_RELATIVE, getString(R.string.relative)),
+            RadioItem(Relation.TYPE_CUSTOM, getString(org.fossify.commons.R.string.custom))
+        )
+
+        val currentRelationTypeId = getRelationTypeId(relatedTypeField.value)
+        RadioGroupDialog(this, items, currentRelationTypeId) {
+            if (it as Int == Relation.TYPE_CUSTOM) {
+                CustomLabelDialog(this) {
+                    relatedTypeField.text = it
+                }
+            } else {
+                relatedTypeField.text = getRelationTypeText(it, "")
+            }
+        }
+    }
+
+    private fun getRelationTypeId(text: String): Int {
+        val relationTypes = arrayListOf(
+            Relation.TYPE_SPOUSE,
+            Relation.TYPE_CHILD,
+            Relation.TYPE_PARENT,
+            Relation.TYPE_BROTHER,
+            Relation.TYPE_SISTER,
+            Relation.TYPE_FATHER,
+            Relation.TYPE_MOTHER,
+            Relation.TYPE_FRIEND,
+            Relation.TYPE_PARTNER,
+            Relation.TYPE_DOMESTIC_PARTNER,
+            Relation.TYPE_ASSISTANT,
+            Relation.TYPE_MANAGER,
+            Relation.TYPE_REFERRED_BY,
+            Relation.TYPE_RELATIVE
+        )
+
+        return relationTypes.firstOrNull { getRelationTypeText(it, "") == text } ?: Relation.TYPE_CUSTOM
+    }
+
     private fun setupEvents() {
         contact!!.events.forEachIndexed { index, event ->
             val eventHolderView = binding.contactEventsHolder.getChildAt(index)
@@ -954,6 +1057,13 @@ class EditContactActivity : ContactActivity() {
             val groupsHolder = ItemEditGroupBinding.bind(binding.contactGroupsHolder.getChildAt(0))
             groupsHolder.contactGroup.apply {
                 setupGroupsPicker(this)
+            }
+        }
+
+        if (contact!!.relatedContacts.isEmpty()) {
+            val relatedHolder = ItemEditRelatedBinding.bind(binding.contactRelationsHolder.getChildAt(0))
+            relatedHolder.contactRelatedType.apply {
+                setupRelationTypePicker(this, Relation.TYPE_SPOUSE, "")
             }
         }
     }
@@ -1219,6 +1329,7 @@ class EditContactActivity : ContactActivity() {
         val filledIMs = getFilledIMs()
         val filledEvents = getFilledEvents()
         val filledWebsites = getFilledWebsites()
+        val filledRelatedContacts = getFilledRelatedContacts()
 
         val newContact = contact!!.copy(
             prefix = binding.contactPrefix.value,
@@ -1236,6 +1347,7 @@ class EditContactActivity : ContactActivity() {
             starred = if (isContactStarred()) 1 else 0,
             notes = binding.contactNotes.value,
             websites = filledWebsites,
+            relatedContacts = filledRelatedContacts,
         )
 
         val company = binding.contactOrganizationCompany.value
@@ -1376,6 +1488,22 @@ class EditContactActivity : ContactActivity() {
             }
         }
         return websites
+    }
+
+    private fun getFilledRelatedContacts(): ArrayList<RelatedContact> {
+        val relatedContacts = ArrayList<RelatedContact>()
+        val relatedContactsCount = binding.contactRelationsHolder.childCount
+        for (i in 0 until relatedContactsCount) {
+            val relatedHolder = ItemEditRelatedBinding.bind(binding.contactRelationsHolder.getChildAt(i))
+            val name = relatedHolder.contactRelated.value
+            val relatedType = getRelationTypeId(relatedHolder.contactRelatedType.value)
+            val relatedLabel = if (relatedType == Relation.TYPE_CUSTOM) relatedHolder.contactRelatedType.value else ""
+
+            if (name.isNotEmpty()) {
+                relatedContacts.add(RelatedContact(name, relatedType, relatedLabel))
+            }
+        }
+        return relatedContacts
     }
 
     private fun insertNewContact(deleteCurrentContact: Boolean) {
@@ -1604,6 +1732,7 @@ class EditContactActivity : ContactActivity() {
                 CommonDataKinds.Event.CONTENT_ITEM_TYPE -> parseEvent(it)
                 Website.CONTENT_ITEM_TYPE -> parseWebsite(it)
                 Note.CONTENT_ITEM_TYPE -> parseNote(it)
+                Relation.CONTENT_ITEM_TYPE -> parseRelation(it)
             }
         }
     }
@@ -1651,6 +1780,13 @@ class EditContactActivity : ContactActivity() {
     private fun parseNote(contentValues: ContentValues) {
         val note = contentValues.getAsString(Note.DATA1) ?: return
         contact!!.notes = note
+    }
+
+    private fun parseRelation(contentValues: ContentValues) {
+        val type = contentValues.getAsInteger(Relation.TYPE) ?: Relation.TYPE_SPOUSE
+        val name = contentValues.getAsString(Relation.NAME) ?: return
+        val label = contentValues.getAsString(Relation.LABEL) ?: ""
+        contact!!.relatedContacts.add(RelatedContact(name, type, label))
     }
 
     private fun startTakePhotoIntent() {

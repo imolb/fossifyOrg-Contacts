@@ -14,6 +14,7 @@ import android.provider.ContactsContract.CommonDataKinds.BaseTypes
 import android.provider.ContactsContract.CommonDataKinds.Email
 import android.provider.ContactsContract.CommonDataKinds.Event
 import android.provider.ContactsContract.CommonDataKinds.Im
+import android.provider.ContactsContract.CommonDataKinds.Relation
 import android.provider.ContactsContract.CommonDataKinds.StructuredPostal
 import android.widget.ImageView
 import android.widget.TextView
@@ -232,6 +233,32 @@ abstract class ContactActivity : SimpleActivity() {
         Event.TYPE_ANNIVERSARY -> org.fossify.commons.R.string.anniversary
         Event.TYPE_BIRTHDAY -> org.fossify.commons.R.string.birthday
         else -> org.fossify.commons.R.string.other
+    }
+
+    private val relationTypeTexts = listOf(
+        Relation.TYPE_SPOUSE to R.string.spouse,
+        Relation.TYPE_CHILD to R.string.child,
+        Relation.TYPE_PARENT to R.string.parent,
+        Relation.TYPE_BROTHER to R.string.brother,
+        Relation.TYPE_SISTER to R.string.sister,
+        Relation.TYPE_FATHER to R.string.father,
+        Relation.TYPE_MOTHER to R.string.mother,
+        Relation.TYPE_FRIEND to R.string.friend,
+        Relation.TYPE_PARTNER to R.string.partner,
+        Relation.TYPE_DOMESTIC_PARTNER to R.string.domestic_partner,
+        Relation.TYPE_ASSISTANT to R.string.assistant,
+        Relation.TYPE_MANAGER to R.string.manager,
+        Relation.TYPE_REFERRED_BY to R.string.referred_by,
+        Relation.TYPE_RELATIVE to R.string.relative,
+    )
+
+    fun getRelationTypeText(type: Int, label: String): String {
+        val textId = relationTypeTexts.firstOrNull { it.first == type }?.second ?: 0
+        return if (textId == 0) {
+            label
+        } else {
+            getString(textId)
+        }
     }
 
     private fun getBigLetterPlaceholder(name: String): Bitmap {

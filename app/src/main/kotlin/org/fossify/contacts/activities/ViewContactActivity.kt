@@ -227,7 +227,7 @@ class ViewContactActivity : ContactActivity() {
         arrayOf(
             binding.contactNameImage, binding.contactNumbersImage, binding.contactEmailsImage, binding.contactAddressesImage, binding.contactImsImage,
             binding.contactEventsImage, binding.contactSourceImage, binding.contactNotesImage, binding.contactRingtoneImage, binding.contactOrganizationImage,
-            binding.contactWebsitesImage, binding.contactGroupsImage
+            binding.contactWebsitesImage, binding.contactGroupsImage, binding.contactRelationsImage
         ).forEach {
             it.applyColorFilter(textColor)
         }
@@ -272,6 +272,7 @@ class ViewContactActivity : ContactActivity() {
         setupAddresses()
         setupIMs()
         setupEvents()
+        setupRelations()
         setupWebsites()
         setupGroups()
         setupContactSources()
@@ -539,6 +540,37 @@ class ViewContactActivity : ContactActivity() {
         } else {
             binding.contactEventsImage.beGone()
             binding.contactEventsHolder.beGone()
+        }
+    }
+
+    private fun setupRelations() {
+        var relations = contact!!.relatedContacts.toMutableSet() as LinkedHashSet<RelatedContact>
+
+        if (mergeDuplicate) {
+            duplicateContacts.forEach {
+                relations.addAll(it.relatedContacts)
+            }
+        }
+
+        relations = relations.sortedBy { it.type }.toMutableSet() as LinkedHashSet<RelatedContact>
+        fullContact!!.relatedContacts = relations.toMutableList() as ArrayList<RelatedContact>
+        binding.contactRelationsHolder.removeAllViews()
+
+        if (relations.isNotEmpty() && showFields and SHOW_RELATIONSHIPS_FIELD != 0) {
+            relations.forEach {
+                ItemViewRelatedBinding.inflate(layoutInflater, binding.contactRelationsHolder, false).apply {
+                    val relatedContact = it
+                    binding.contactRelationsHolder.addView(root)
+                    contactRelated.text = relatedContact.name
+                    contactRelatedType.text = getRelationTypeText(relatedContact.type, relatedContact.label)
+                    root.copyOnLongClick(relatedContact.name)
+                }
+            }
+            binding.contactRelationsImage.beVisible()
+            binding.contactRelationsHolder.beVisible()
+        } else {
+            binding.contactRelationsImage.beGone()
+            binding.contactRelationsHolder.beGone()
         }
     }
 
