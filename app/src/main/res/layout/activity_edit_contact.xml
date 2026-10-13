@@ -517,7 +517,7 @@
                 android:paddingTop="@dimen/medium_margin"
                 android:paddingEnd="@dimen/small_margin"
                 android:paddingBottom="@dimen/small_margin"
-                android:src="@drawable/ic_people_vector" />
+                android:src="@drawable/ic_relations_vector" />
 
             <LinearLayout
                 android:id="@+id/contact_relations_holder"
