@@ -54,6 +54,7 @@ class VcfImporter(val activity: SimpleActivity) {
             }
 
             val ezContacts = Ezvcard.parse(inputStream).all()
+            val appleLabels = ezContacts.associate { contact -> contact to getAppleLabels(contact) }
             for (ezContact in ezContacts) {
                 val structuredName = ezContact.structuredName
                 val prefix = structuredName?.prefixes?.firstOrNull() ?: ""
@@ -67,16 +68,8 @@ class VcfImporter(val activity: SimpleActivity) {
                 val phoneNumbers = ArrayList<PhoneNumber>()
                 ezContact.telephoneNumbers.forEach {
                     val number = it.text
-                    val type = getPhoneNumberTypeId(
-                        type = it.types.firstOrNull()?.value ?: MOBILE,
-                        subtype = it.types.getOrNull(1)?.value
-                    )
-                    val label = if (type == Phone.TYPE_CUSTOM) {
-                        it.types.firstOrNull()?.value ?: ""
-                    } else {
-                        ""
-                    }
-
+                    val abLabel = appleLabels[ezContact]?.get(it.group ?: "") ?: ""
+                    val (type, label) = getResolvedPhoneNumberTypeAndLabel(it.types.map { type -> type.value }, abLabel)
                     val preferred = getPreferredValue(it.types.lastOrNull()?.value) == 1
                     phoneNumbers.add(
                         PhoneNumber(
@@ -92,12 +85,8 @@ class VcfImporter(val activity: SimpleActivity) {
                 val emails = ArrayList<Email>()
                 ezContact.emails.forEach {
                     val email = it.value
-                    val type = getEmailTypeId(it.types.firstOrNull()?.value ?: HOME)
-                    val label = if (type == CommonDataKinds.Email.TYPE_CUSTOM) {
-                        it.types.firstOrNull()?.value ?: ""
-                    } else {
-                        ""
-                    }
+                    val abLabel = appleLabels[ezContact]?.get(it.group ?: "") ?: ""
+                    val (type, label) = getResolvedEmailTypeAndLabel(it.types.map { type -> type.value }, abLabel)
 
                     if (email.isNotEmpty()) {
                         emails.add(Email(email, type, label))
@@ -107,12 +96,8 @@ class VcfImporter(val activity: SimpleActivity) {
                 val addresses = ArrayList<Address>()
                 ezContact.addresses.forEach {
                     var address = it.streetAddress ?: ""
-                    val type = getAddressTypeId(it.types.firstOrNull()?.value ?: HOME)
-                    val label = if (type == StructuredPostal.TYPE_CUSTOM) {
-                        it.types.firstOrNull()?.value ?: ""
-                    } else {
-                        ""
-                    }
+                    val abLabel = appleLabels[ezContact]?.get(it.group ?: "") ?: ""
+                    val (type, label) = getResolvedAddressTypeAndLabel(it.types.map { type -> type.value }, abLabel)
                     val country = it.country ?: ""
                     val region = it.region ?: ""
                     val city = it.locality ?: ""
@@ -190,13 +175,24 @@ class VcfImporter(val activity: SimpleActivity) {
                     events.add(event)
                 }
 
+                // vCard 3.0 anniversary fallback: DAVx5 and Apple write X-ANNIVERSARY
+                if (ezContact.anniversaries.isEmpty()) {
+                    ezContact.getExtendedProperties(X_ANNIVERSARY).forEach { rawAnniversary ->
+                        val dayCode = parseXAnniversaryDate(rawAnniversary.value)
+                        if (dayCode != null) {
+                            events.add(Event(dayCode, CommonDataKinds.Event.TYPE_ANNIVERSARY))
+                        }
+                    }
+                }
+
                 val starred = 0
                 val contactId = 0
                 val notes = ezContact.notes.firstOrNull()?.value ?: ""
                 val groups = getContactGroups(ezContact)
                 val company = ezContact.organization?.values?.firstOrNull() ?: ""
                 val jobPosition = ezContact.titles?.firstOrNull()?.value ?: ""
-                val organization = Organization(company, jobPosition)
+                val department = ezContact.organization?.values?.getOrNull(1) ?: ""
+                val organization = Organization(company, jobPosition, department)
                 val websites = ezContact.urls.map { it.value } as ArrayList<String>
                 val photoData = ezContact.photos.firstOrNull()?.data
                 val photo = if (photoData != null) {
@@ -354,49 +350,6 @@ class VcfImporter(val activity: SimpleActivity) {
             }
         }
         return groups
-    }
-
-    private fun getPhoneNumberTypeId(type: String, subtype: String?) =
-        when (type.uppercase(Locale.getDefault())) {
-            CELL -> Phone.TYPE_MOBILE
-            HOME -> {
-                if (subtype?.uppercase(Locale.getDefault()) == FAX) {
-                    Phone.TYPE_FAX_HOME
-                } else {
-                    Phone.TYPE_HOME
-                }
-            }
-
-            WORK -> {
-                if (subtype?.uppercase(Locale.getDefault()) == FAX) {
-                    Phone.TYPE_FAX_WORK
-                } else {
-                    Phone.TYPE_WORK
-                }
-            }
-
-            MAIN -> Phone.TYPE_MAIN
-            WORK_FAX -> Phone.TYPE_FAX_WORK
-            HOME_FAX -> Phone.TYPE_FAX_HOME
-            FAX -> Phone.TYPE_FAX_WORK
-            PAGER -> Phone.TYPE_PAGER
-            OTHER -> Phone.TYPE_OTHER
-            else -> Phone.TYPE_CUSTOM
-        }
-
-    private fun getEmailTypeId(type: String) = when (type.uppercase(Locale.getDefault())) {
-        HOME -> CommonDataKinds.Email.TYPE_HOME
-        WORK -> CommonDataKinds.Email.TYPE_WORK
-        MOBILE -> CommonDataKinds.Email.TYPE_MOBILE
-        OTHER -> CommonDataKinds.Email.TYPE_OTHER
-        else -> CommonDataKinds.Email.TYPE_CUSTOM
-    }
-
-    private fun getAddressTypeId(type: String) = when (type.uppercase(Locale.getDefault())) {
-        HOME -> StructuredPostal.TYPE_HOME
-        WORK -> StructuredPostal.TYPE_WORK
-        OTHER -> StructuredPostal.TYPE_OTHER
-        else -> StructuredPostal.TYPE_CUSTOM
     }
 
     private fun savePhoto(byteArray: ByteArray?): String {

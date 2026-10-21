@@ -409,10 +409,25 @@
                 android:visibility="gone" />
 
             <org.fossify.commons.views.MyTextView
-                android:id="@+id/contact_organization_job_position"
+                android:id="@+id/contact_organization_department"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/contact_organization_company"
+                android:layout_centerVertical="true"
+                android:layout_toEndOf="@+id/contact_organization_image"
+                android:background="?attr/selectableItemBackground"
+                android:lineSpacingExtra="@dimen/medium_margin"
+                android:paddingStart="@dimen/small_margin"
+                android:paddingTop="@dimen/normal_margin"
+                android:paddingBottom="@dimen/normal_margin"
+                android:textSize="@dimen/bigger_text_size"
+                android:visibility="gone" />
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/contact_organization_job_position"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/contact_organization_department"
                 android:layout_centerVertical="true"
                 android:layout_toEndOf="@+id/contact_organization_image"
                 android:background="?attr/selectableItemBackground"

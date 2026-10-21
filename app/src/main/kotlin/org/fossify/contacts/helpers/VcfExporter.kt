@@ -169,6 +169,9 @@ class VcfExporter {
                 if (contact.organization.isNotEmpty()) {
                     val organization = Organization()
                     organization.values.add(contact.organization.company)
+                    if (contact.organization.department.isNotEmpty()) {
+                        organization.values.add(contact.organization.department)
+                    }
                     card.organization = organization
                     card.titles.add(Title(contact.organization.jobPosition))
                 }

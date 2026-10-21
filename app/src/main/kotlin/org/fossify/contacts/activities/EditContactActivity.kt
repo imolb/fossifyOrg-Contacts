@@ -545,6 +545,7 @@ class EditContactActivity : ContactActivity() {
 
         val isOrganizationVisible = showFields and SHOW_ORGANIZATION_FIELD != 0
         binding.contactOrganizationCompany.beVisibleIf(isOrganizationVisible)
+        binding.contactOrganizationDepartment.beVisibleIf(isOrganizationVisible)
         binding.contactOrganizationJobPosition.beVisibleIf(isOrganizationVisible)
         binding.contactOrganizationImage.beVisibleIf(isOrganizationVisible)
 
@@ -800,6 +801,7 @@ class EditContactActivity : ContactActivity() {
 
     private fun setupOrganization() {
         binding.contactOrganizationCompany.setText(contact!!.organization.company)
+        binding.contactOrganizationDepartment.setText(contact!!.organization.department)
         binding.contactOrganizationJobPosition.setText(contact!!.organization.jobPosition)
     }
 
@@ -1283,7 +1285,7 @@ class EditContactActivity : ContactActivity() {
 
         val contactFields = arrayListOf(
             binding.contactPrefix, binding.contactFirstName, binding.contactMiddleName, binding.contactSurname, binding.contactSuffix, binding.contactNickname,
-            binding.contactNotes, binding.contactOrganizationCompany, binding.contactOrganizationJobPosition
+            binding.contactNotes, binding.contactOrganizationCompany, binding.contactOrganizationDepartment, binding.contactOrganizationJobPosition
         )
 
         if (contactFields.all { it.value.isEmpty() }) {
@@ -1352,7 +1354,8 @@ class EditContactActivity : ContactActivity() {
 
         val company = binding.contactOrganizationCompany.value
         val jobPosition = binding.contactOrganizationJobPosition.value
-        newContact.organization = Organization(company, jobPosition)
+        val department = binding.contactOrganizationDepartment.value
+        newContact.organization = Organization(company, jobPosition, department)
         return newContact
     }
 
@@ -1762,7 +1765,8 @@ class EditContactActivity : ContactActivity() {
     private fun parseOrganization(contentValues: ContentValues) {
         val company = contentValues.getAsString(CommonDataKinds.Organization.DATA1) ?: ""
         val jobPosition = contentValues.getAsString(CommonDataKinds.Organization.DATA4) ?: ""
-        contact!!.organization = Organization(company, jobPosition)
+        val department = contentValues.getAsString(CommonDataKinds.Organization.DATA5) ?: ""
+        contact!!.organization = Organization(company, jobPosition, department)
     }
 
     private fun parseEvent(contentValues: ContentValues) {

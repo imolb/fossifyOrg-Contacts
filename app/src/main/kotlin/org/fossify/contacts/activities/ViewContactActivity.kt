@@ -779,11 +779,14 @@ class ViewContactActivity : ContactActivity() {
         val organization = contact!!.organization
         if (organization.isNotEmpty() && showFields and SHOW_ORGANIZATION_FIELD != 0) {
             binding.contactOrganizationCompany.text = organization.company
+            binding.contactOrganizationDepartment.text = organization.department
             binding.contactOrganizationJobPosition.text = organization.jobPosition
             binding.contactOrganizationImage.beGoneIf(organization.isEmpty())
             binding.contactOrganizationCompany.beGoneIf(organization.company.isEmpty())
+            binding.contactOrganizationDepartment.beGoneIf(organization.department.isEmpty())
             binding.contactOrganizationJobPosition.beGoneIf(organization.jobPosition.isEmpty())
             binding.contactOrganizationCompany.copyOnLongClick(binding.contactOrganizationCompany.value)
+            binding.contactOrganizationDepartment.copyOnLongClick(binding.contactOrganizationDepartment.value)
             binding.contactOrganizationJobPosition.copyOnLongClick(binding.contactOrganizationJobPosition.value)
 
             if (organization.company.isEmpty() && organization.jobPosition.isNotEmpty()) {
